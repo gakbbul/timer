@@ -1,101 +1,160 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>시간 카운트다운</title>
-    <style>
-        body {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            font-family: Arial, sans-serif;
-            text-align: center;
-            background-color: white;
-            color: black;
-        }
-        #main-timer {
-            font-size: 3em;
-            margin-bottom: 40px; /* 간격 증가 */
-        }
-        #next-timer {
-            font-size: 1.5em;
-            color: gray;
-        }
-        @media (prefers-color-scheme: dark) {
-            body {
-                background-color: black;
-                color: white;
-            }
-            #next-timer {
-                color: lightgray;
-            }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>시간 카운트다운</title>
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background-color: #000;
+      margin: 0;
+      font-family: 'Noto Sans KR', sans-serif;
+      color: #fff;
+      height: 100vh;
+      overflow: hidden;
+    }
+    .container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+    .timer-box {
+      background-color: #000;
+      border: 4px solid #fff;
+      border-radius: 44px;
+      padding: 20px 20px;
+      width: 95%;
+      max-width: none;
+      text-align: center;
+      box-sizing: border-box;
+      box-shadow: 0 4px 10px rgba(255, 255, 255, 0.3);
+    }
+    .timer-box.main {
+      border-radius: 44px;
+      padding: 50px 20px;
+    }
+    .timer-box.second,
+    .timer-box.third {
+      border-radius: 89px;
+    }
+    .timer-text {
+      font-size: 1.5em;
+      margin: 0;
+      white-space: nowrap;
+      overflow: visible;
+    }
+    .timer-box.main .timer-text {
+      font-size: 2em;
+    }
+    .date-text {
+      font-size: 0.9em;
+      margin-top: 10px;
+    }
+    @media (max-width: 600px) {
+      .timer-box {
+        padding: 15px 15px;
+      }
+      .timer-text {
+        font-size: 1.2em;
+      }
+      .timer-box.main .timer-text {
+        font-size: 1.7em;
+      }
+      .date-text {
+        font-size: 0.8em;
+      }
+    }
+  </style>
+  <!-- 구글 폰트 추가 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400&display=swap">
 </head>
 <body>
-    <div id="main-timer">계산 중...</div>
-    <div id="next-timer">계산 중...</div>
-    
-    <script>
-        function getNextTargetTimes() {
-            const now = new Date();
-            const targetDays = [1, 3, 5]; // 월(1), 수(3), 금(5)
-            const targetHour = 21;
-            const targetMinute = 25;
+  <div class="container">
+    <div class="timer-box main">
+      <div class="timer-text" id="main-timer">계산 중...</div>
+      <div class="date-text" id="main-date">날짜 로딩 중...</div>
+    </div>
+    <div class="timer-box second">
+      <div class="timer-text" id="second-timer">계산 중...</div>
+      <div class="date-text" id="second-date">날짜 로딩 중...</div>
+    </div>
+    <div class="timer-box third">
+      <div class="timer-text" id="third-timer">계산 중...</div>
+      <div class="date-text" id="third-date">날짜 로딩 중...</div>
+    </div>
+  </div>
 
-            let firstTarget = null;
-            let secondTarget = null;
+  <script>
+    function getNextTargetTimes() {
+      const now = new Date();
+      const targetDays = [1, 3, 5]; // 월요일(1), 수요일(3), 금요일(5)
+      const targetHour = 21;
+      const targetMinute = 25;
 
-            for (let i = 0; i < 7; i++) {
-                let tempDate = new Date(now);
-                tempDate.setDate(now.getDate() + i);
-                tempDate.setHours(targetHour, targetMinute, 0, 0);
+      let targets = [];
+      let dayOffset = 0;
 
-                if (targetDays.includes(tempDate.getDay())) {
-                    if (!firstTarget) {
-                        if (tempDate > now) {
-                            firstTarget = tempDate;
-                        }
-                    } else if (!secondTarget) {
-                        if (tempDate > firstTarget) {
-                            secondTarget = tempDate;
-                            break;
-                        }
-                    }
-                }
-            }
-            return { firstTarget, secondTarget };
+      while (targets.length < 3) {
+        let tempDate = new Date(now);
+        tempDate.setDate(now.getDate() + dayOffset);
+        tempDate.setHours(targetHour, targetMinute, 0, 0);
+
+        if (targetDays.includes(tempDate.getDay()) && tempDate > now) {
+          targets.push(new Date(tempDate));
         }
+        dayOffset++;
+      }
+      return targets;
+    }
 
-        function updateCountdown() {
-            const { firstTarget, secondTarget } = getNextTargetTimes();
-            const now = new Date();
+    function updateCountdown() {
+      const targets = getNextTargetTimes();
+      const now = new Date();
 
-            function formatTimeDiff(target) {
-                const diff = target - now;
-                const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-                const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-                const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-                
-                let result = [];
-                if (days > 0) result.push(`${days}일`);
-                if (hours > 0) result.push(`${hours}시간`);
-                if (minutes > 0) result.push(`${minutes}분`);
-                result.push(`${seconds}초`); // 0초도 항상 표시
-                
-                return result.join(" ");
-            }
+      function formatTimeDiff(target) {
+        const diff = target - now;
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor(
+          (diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
+        );
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
 
-            document.getElementById("main-timer").textContent = formatTimeDiff(firstTarget);
-            document.getElementById("next-timer").textContent = `다음: ${formatTimeDiff(secondTarget)}`;
-        }
+        let result = [];
+        if (days > 0) result.push(`${days}일`);
+        if (hours > 0) result.push(`${hours}시간`);
+        if (minutes > 0) result.push(`${minutes}분`);
+        result.push(`${seconds}초`);
 
-        setInterval(updateCountdown, 1000);
-        updateCountdown();
-    </script>
+        return result.join(" ");
+      }
+
+      function formatDate(target) {
+        const dayNames = ["일", "월", "화", "수", "목", "금", "토"];
+        const month = target.getMonth() + 1;
+        const date = target.getDate();
+        const day = dayNames[target.getDay()];
+        return `${month}월 ${date}일 (${day})`;
+      }
+
+      document.getElementById("main-timer").textContent = formatTimeDiff(targets[0]);
+      document.getElementById("second-timer").textContent = formatTimeDiff(targets[1]);
+      document.getElementById("third-timer").textContent = formatTimeDiff(targets[2]);
+
+      document.getElementById("main-date").textContent = formatDate(targets[0]);
+      document.getElementById("second-date").textContent = formatDate(targets[1]);
+      document.getElementById("third-date").textContent = formatDate(targets[2]);
+    }
+
+    setInterval(updateCountdown, 1000);
+    updateCountdown();
+  </script>
 </body>
 </html>
